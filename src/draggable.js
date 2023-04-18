@@ -1,9 +1,8 @@
-(function(window, $) {
+(function(window) {
 
   class Draggable {
     constructor(ctrl, options) {
       this.dragObject = null;
-      this.dragHandler = null;
       this.pos_y;
       this.pos_x;
       this.ofs_x;
@@ -28,6 +27,7 @@
 
       if (this.dragHandler) {
         this.dragHandler.style.cursor = 'move';
+        this.dragHandler.style.zIndex = 1;
         ctrl.style.position = 'fixed';
 
         this.dragHandler.addEventListener('mousedown', (event) => {
@@ -121,13 +121,13 @@
 
   function makeDraggable(ctrl, options) {
     if (!ctrl.__draggable) {
-      ctrl.__draggable = new Draggable(this, options);
+      ctrl.__draggable = new Draggable(ctrl, options);
     }
     return ctrl.__draggable;
   }
 
-  if ($) {
-    $.fn.makeDraggable = function(options) {
+  if (window.$) {
+    window.$.fn.makeDraggable = function(options) {
       this.each(function() {
         new Draggable(this, options);
       });
@@ -137,4 +137,4 @@
 
   if (typeof module !== 'undefined' && module.exports) module.exports = makeDraggable; else window.makeDraggable = makeDraggable;
 
-})(window, jQuery);
+})(window);
