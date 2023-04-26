@@ -28,7 +28,8 @@
       if (this.dragHandler) {
         this.dragHandler.style.cursor = 'move';
         this.dragHandler.style.zIndex = 1;
-        ctrl.style.position = 'fixed';
+
+        this.prepareControl(ctrl);
 
         this.dragHandler.addEventListener('mousedown', (event) => {
           this.downHandler(event);
@@ -54,6 +55,29 @@
           this.upHandler();
         });
       }
+    }
+
+    position(element) {
+      var top = 0, left = 0;
+      do {
+        top += element.offsetTop  || 0;
+        left += element.offsetLeft || 0;
+        element = element.offsetParent;
+      } while(element);
+
+      return {
+        top: top,
+        left: left
+      };
+    }
+
+    prepareControl(element) {
+      let position = this.position(element);
+      element.style.position = 'fixed';
+      element.style.left = position.left + 'px';
+      element.style.top = position.top + 'px';
+      element.style.marginTop = '0px';
+      element.style.marginLeft = '0px';
     }
 
     setPosition(element, left, top) {
