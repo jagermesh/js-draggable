@@ -4,9 +4,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define([], factory);
 	else if(typeof exports === 'object')
-		exports["makeDraggable"] = factory();
+		exports["Draggable"] = factory();
 	else
-		root["makeDraggable"] = factory();
+		root["Draggable"] = factory();
 })(this, () => {
 return /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
@@ -68,12 +68,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 class Draggable {
   #dragObject = null;
+
   #pos_x;
+
   #pos_y;
+
   #ofs_x;
+
   #ofs_y;
+
   #ctrl;
+
   #dragHandler;
+
   #options;
 
   constructor(ctrl, options) {
@@ -87,6 +94,8 @@ class Draggable {
         'A',
         'BUTTON',
       ],
+      handler: null,
+      ondrag: null,
     }, options);
 
     if (this.#options.handler) {
@@ -101,34 +110,38 @@ class Draggable {
 
       this.#prepareControl(ctrl);
 
-      this.#dragHandler.addEventListener('mousedown', (event) => {
-        this.#downHandler(event);
+      this.#dragHandler.addEventListener('mousedown', this.#onPointerDown);
+      this.#dragHandler.addEventListener('touchstart', this.#onTouchStart, {
+        passive: false,
       });
 
-      window.addEventListener('mousemove', (event) => {
-        this.#moveHandler(event);
+      window.addEventListener('mousemove', this.#onPointerMove);
+      window.addEventListener('mouseup', this.#onPointerUp);
+      window.addEventListener('touchmove', this.#onPointerMove, {
+        passive: false,
       });
-
-      window.addEventListener('mouseup', () => {
-        this.#upHandler();
-      });
-
-      this.#dragHandler.addEventListener('touchstart', (event) => {
-        this.#downHandler(event, true);
-      });
-
-      window.addEventListener('touchmove', (event) => {
-        this.#moveHandler(event);
-      });
-
-      window.addEventListener('touchend', () => {
-        this.#upHandler();
-      });
+      window.addEventListener('touchend', this.#onPointerUp);
     }
   }
 
+  destroy() {
+    this.#upHandler();
+
+    if (this.#dragHandler) {
+      this.#dragHandler.removeEventListener('mousedown', this.#onPointerDown);
+      this.#dragHandler.removeEventListener('touchstart', this.#onTouchStart);
+    }
+
+    window.removeEventListener('mousemove', this.#onPointerMove);
+    window.removeEventListener('mouseup', this.#onPointerUp);
+    window.removeEventListener('touchmove', this.#onPointerMove);
+    window.removeEventListener('touchend', this.#onPointerUp);
+  }
+
   #position(element) {
-    let top = 0, left = 0;
+    let top = 0;
+    let left = 0;
+
     do {
       top += element.offsetTop || 0;
       left += element.offsetLeft || 0;
@@ -136,16 +149,17 @@ class Draggable {
     } while (element);
 
     return {
-      top: top,
-      left: left,
+      top,
+      left,
     };
   }
 
   #prepareControl(element) {
-    let position = this.#position(element);
+    const position = this.#position(element);
+
     element.style.position = 'fixed';
-    element.style.left = position.left + 'px';
-    element.style.top = position.top + 'px';
+    element.style.left = `${position.left}px`;
+    element.style.top = `${position.top}px`;
     element.style.marginTop = '0px';
     element.style.marginLeft = '0px';
   }
@@ -153,83 +167,91 @@ class Draggable {
   #setPosition(element, left, top) {
     element.style.marginTop = '0px';
     element.style.marginLeft = '0px';
-    element.style.left = left + 'px';
-    element.style.top = top + 'px';
+    element.style.left = `${left}px`;
+    element.style.top = `${top}px`;
     element.style.right = '';
     element.style.bottom = '';
   }
 
-  #moveHandler(e) {
-    if (this.#dragObject !== null) {
-      let pageX = e.pageX ?? e.touches[0].pageX;
-      let pageY = e.pageY ?? e.touches[0].pageY;
-      let left = pageX - this.#pos_x - this.#ofs_x - document.body.scrollLeft;
-      let top = pageY - this.#pos_y - this.#ofs_y - document.body.scrollTop;
-      if (top < 0) {
-        top = 0;
-      }
-      if (top > window.innerHeight) {
-        top = window.innerHeight - 40;
-      }
-      if (left < 0) {
-        left = 0;
-      }
+  #onPointerDown = (event) => {
+    this.#downHandler(event);
+  };
 
-      this.#setPosition(this.#dragObject, left, top);
-      if (this.#options.ondrag) {
-        this.#options.ondrag.call(e);
-      }
+  #onTouchStart = (event) => {
+    this.#downHandler(event, true);
+  };
+
+  #onPointerMove = (event) => {
+    this.#moveHandler(event);
+  };
+
+  #onPointerUp = () => {
+    this.#upHandler();
+  };
+
+  #moveHandler(e) {
+    if (this.#dragObject === null) {
+      return;
+    }
+
+    const pageX = e.pageX ?? e.touches[0].pageX;
+    const pageY = e.pageY ?? e.touches[0].pageY;
+    let left = pageX - this.#pos_x - this.#ofs_x - document.body.scrollLeft;
+    let top = pageY - this.#pos_y - this.#ofs_y - document.body.scrollTop;
+
+    if (top < 0) {
+      top = 0;
+    }
+    if (top > window.innerHeight) {
+      top = window.innerHeight - 40;
+    }
+    if (left < 0) {
+      left = 0;
+    }
+
+    this.#setPosition(this.#dragObject, left, top);
+
+    if (typeof this.#options.ondrag === 'function') {
+      this.#options.ondrag.call(e);
     }
   }
 
   #upHandler() {
-    if (this.#dragObject !== null) {
-      this.#dragObject = null;
-    }
+    this.#dragObject = null;
   }
 
   #downHandler(e, touchEvent) {
-    if ((e.button === 0) || touchEvent) {
-      let target = e.target || e.srcElement;
-      let parent = target.parentNode;
-
-      if (target && (this.#options.exclude.indexOf(target.tagName.toUpperCase()) == -1)) {
-        if (!parent || (this.#options.exclude.indexOf(parent.tagName.toUpperCase()) == -1)) { // img in a
-          this.#dragObject = this.#ctrl;
-
-          let pageX = e.pageX || e.touches[0].pageX;
-          let pageY = e.pageY || e.touches[0].pageY;
-
-          this.#ofs_x = this.#dragObject.getBoundingClientRect().left - this.#dragObject.offsetLeft;
-          this.#ofs_y = this.#dragObject.getBoundingClientRect().top - this.#dragObject.offsetTop;
-
-          this.#pos_x = pageX - (this.#dragObject.getBoundingClientRect().left + document.body.scrollLeft);
-          this.#pos_y = pageY - (this.#dragObject.getBoundingClientRect().top + document.body.scrollTop);
-
-          e.preventDefault();
-        }
-      }
+    if ((e.button !== 0) && !touchEvent) {
+      return;
     }
+
+    const target = e.target || e.srcElement;
+    const parent = target.parentNode;
+
+    if (!target || (this.#options.exclude.indexOf(target.tagName.toUpperCase()) !== -1)) {
+      return;
+    }
+
+    if (parent && (this.#options.exclude.indexOf(parent.tagName.toUpperCase()) !== -1)) {
+      return;
+    }
+
+    this.#dragObject = this.#ctrl;
+
+    const pageX = e.pageX || e.touches[0].pageX;
+    const pageY = e.pageY || e.touches[0].pageY;
+
+    this.#ofs_x = this.#dragObject.getBoundingClientRect().left - this.#dragObject.offsetLeft;
+    this.#ofs_y = this.#dragObject.getBoundingClientRect().top - this.#dragObject.offsetTop;
+
+    this.#pos_x = pageX - (this.#dragObject.getBoundingClientRect().left + document.body.scrollLeft);
+    this.#pos_y = pageY - (this.#dragObject.getBoundingClientRect().top + document.body.scrollTop);
+
+    e.preventDefault();
   }
 }
 
-function makeDraggable(ctrl, options) {
-  if (!ctrl.__draggable) {
-    ctrl.__draggable = new Draggable(ctrl, options);
-  }
-  return ctrl.__draggable;
-}
-
-if (window.$) {
-  window.$.fn.makeDraggable = function(options) {
-    this.each(function() {
-      new Draggable(this, options);
-    });
-    return this;
-  };
-}
-
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (makeDraggable);
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Draggable);
 
 __webpack_exports__ = __webpack_exports__["default"];
 /******/ 	return __webpack_exports__;

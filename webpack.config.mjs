@@ -11,7 +11,7 @@ const baseConfig = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     library: {
-      name: 'makeDraggable',
+      name: 'Draggable',
       type: 'umd',
       export: 'default',
     },

@@ -2,56 +2,81 @@
 
 Simple, lightweight pure JavaScript component that adds a draggable functionality.
 
+## Demo
+
+Open `demo.html` from this repo directly in your browser (no build step required) to see it in action.
+
 ## Installation
 
-### npm / bundler
+### As an npm module
 
 ~~~
 npm install @jagermesh/js-draggable
 ~~~
 
 ~~~js
-import makeDraggable from '@jagermesh/js-draggable';
+import Draggable from '@jagermesh/js-draggable';
 
-makeDraggable(document.getElementById('box'), options);
+const draggable = new Draggable(document.querySelector('.box'));
 ~~~
 
-### Plain `<script>` tag
+### As a plain `<script>` tag
 
 ~~~html
-<script src="https://unpkg.com/@jagermesh/js-draggable/dist/draggable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@jagermesh/js-draggable/dist/draggable.min.js"></script>
 <script>
-  makeDraggable(document.getElementById('box'), options);
+  const draggable = new window.Draggable(document.querySelector('.box'));
 </script>
 ~~~
 
-Loading the script this way sets up a global `makeDraggable(ctrl, options)` function, just like before.
-
-See [demo.html](./demo.html) for a full working example with two draggable boxes (one plain, one with a drag `handler`) that you can open directly in a browser with no build step.
+(or use your own copy of `dist/draggable.min.js`). Either way, the component is exposed as
+`window.Draggable`.
 
 ## Usage
 
-~~~js
-makeDraggable(ctrl, options);
-~~~
-
-or if you have jQuery on the page you can use following
+1) Create a `Draggable` instance:
 
 ~~~js
-$(ctrl).makeDraggable(options);
+const draggable = new Draggable(document.querySelector('.box'));
 ~~~
 
-That's all.
+The element is switched to `position: fixed` so it can be moved freely around the viewport.
 
-There are also some settings which you can pass as `options`
+2) Customize if needed:
 
 ~~~js
-{
-    handler: selector, // CSS selector (relative to ctrl) for the element used to start dragging
-    ondrag: function   // called on every drag move
-}
+const draggable = new Draggable(document.querySelector('.box'), {
+  handler: '.title-bar', // CSS selector (relative to the element) for the drag handle
+  exclude: ['INPUT', 'TEXTAREA', 'SELECT', 'A', 'BUTTON'],
+  ondrag: function() {}, // called on every drag move
+});
 ~~~
 
-Have fun. Send PR if you find any glitches or want to make improvements.
+3) Clean up when you no longer need it:
 
-:)
+~~~js
+draggable.destroy();
+~~~
+
+Available options:
+
+- `handler` (string, default `null`) - CSS selector (relative to the element) for the element used
+  to start dragging; when omitted, the whole element is draggable.
+- `exclude` (array of tag names, default `['INPUT', 'TEXTAREA', 'SELECT', 'A', 'BUTTON']`) - clicks
+  on these tags (or their parent) will not start a drag.
+- `ondrag` (function) - called on every pointer move while dragging.
+
+See `demo.html` for a runnable example.
+
+If you also want resize handles on the same element, you can pair this with
+[`@jagermesh/js-resizable`](https://cdn.jsdelivr.net/npm/@jagermesh/js-resizable/dist/resizable.min.js):
+
+~~~html
+<script src="https://cdn.jsdelivr.net/npm/@jagermesh/js-draggable/dist/draggable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@jagermesh/js-resizable/dist/resizable.min.js"></script>
+<script>
+  const box = document.querySelector('.box');
+  new window.Draggable(box, { handler: '.title-bar' });
+  new window.Resizable(box);
+</script>
+~~~
