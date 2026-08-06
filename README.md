@@ -7,11 +7,11 @@ Simple, lightweight pure JavaScript component that adds a draggable functionalit
 ### npm / bundler
 
 ~~~
-npm install js-draggable
+npm install @jagermesh/js-draggable
 ~~~
 
 ~~~js
-import makeDraggable from 'js-draggable';
+import makeDraggable from '@jagermesh/js-draggable';
 
 makeDraggable(document.getElementById('box'), options);
 ~~~
@@ -19,7 +19,7 @@ makeDraggable(document.getElementById('box'), options);
 ### Plain `<script>` tag
 
 ~~~html
-<script src="https://unpkg.com/js-draggable/dist/draggable.min.js"></script>
+<script src="https://unpkg.com/@jagermesh/js-draggable/dist/draggable.min.js"></script>
 <script>
   makeDraggable(document.getElementById('box'), options);
 </script>
