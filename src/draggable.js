@@ -1,164 +1,164 @@
-(function(window) {
+class Draggable {
+  #dragObject = null;
+  #pos_x;
+  #pos_y;
+  #ofs_x;
+  #ofs_y;
+  #ctrl;
+  #dragHandler;
+  #options;
 
-  class Draggable {
-    constructor(ctrl, options) {
-      this.dragObject = null;
-      this.pos_y;
-      this.pos_x;
-      this.ofs_x;
-      this.ofs_y;
-      this.ctrl = ctrl;
+  constructor(ctrl, options) {
+    this.#ctrl = ctrl;
 
-      this.options = Object.assign({
-        exclude: [
-          'INPUT',
-          'TEXTAREA',
-          'SELECT',
-          'A',
-          'BUTTON'
-        ]
-      }, options);
+    this.#options = Object.assign({
+      exclude: [
+        'INPUT',
+        'TEXTAREA',
+        'SELECT',
+        'A',
+        'BUTTON',
+      ],
+    }, options);
 
-      if (this.options.handler) {
-        this.dragHandler = ctrl.querySelector(this.options.handler);
-      } else {
-        this.dragHandler = ctrl;
-      }
-
-      if (this.dragHandler) {
-        this.dragHandler.style.cursor = 'move';
-        this.dragHandler.style.zIndex = 1;
-
-        this.prepareControl(ctrl);
-
-        this.dragHandler.addEventListener('mousedown', (event) => {
-          this.downHandler(event);
-        });
-
-        window.addEventListener('mousemove', (event) => {
-          this.moveHandler(event);
-        });
-
-        window.addEventListener('mouseup', () => {
-          this.upHandler();
-        });
-
-        this.dragHandler.addEventListener('touchstart', (event) => {
-          this.downHandler(event);
-        });
-
-        window.addEventListener('touchmove', (event) => {
-          this.moveHandler(event);
-        });
-
-        window.addEventListener('touchend', () => {
-          this.upHandler();
-        });
-      }
+    if (this.#options.handler) {
+      this.#dragHandler = ctrl.querySelector(this.#options.handler);
+    } else {
+      this.#dragHandler = ctrl;
     }
 
-    position(element) {
-      var top = 0, left = 0;
-      do {
-        top += element.offsetTop  || 0;
-        left += element.offsetLeft || 0;
-        element = element.offsetParent;
-      } while(element);
+    if (this.#dragHandler) {
+      this.#dragHandler.style.cursor = 'move';
+      this.#dragHandler.style.zIndex = 1;
 
-      return {
-        top: top,
-        left: left
-      };
-    }
+      this.#prepareControl(ctrl);
 
-    prepareControl(element) {
-      let position = this.position(element);
-      element.style.position = 'fixed';
-      element.style.left = position.left + 'px';
-      element.style.top = position.top + 'px';
-      element.style.marginTop = '0px';
-      element.style.marginLeft = '0px';
-    }
-
-    setPosition(element, left, top) {
-      element.style.marginTop = '0px';
-      element.style.marginLeft = '0px';
-      element.style.left = left + 'px';
-      element.style.top = top + 'px';
-      element.style.right = '';
-      element.style.bottom = '';
-    }
-
-    moveHandler(e) {
-      if (this.dragObject !== null) {
-        let pageX = e.pageX ?? e.touches[0].pageX;
-        let pageY = e.pageY ?? e.touches[0].pageY;
-        let left = pageX - this.pos_x - this.ofs_x - document.body.scrollLeft;
-        let top = pageY - this.pos_y - this.ofs_y - document.body.scrollTop;
-        if (top < 0) {
-          top = 0;
-        }
-        if (top > window.innerHeight) {
-          top = window.innerHeight - 40;
-        }
-        if (left < 0) {
-          left = 0;
-        }
-
-        this.setPosition(this.dragObject, left, top);
-        if (this.options.ondrag) {
-          this.options.ondrag.call(e);
-        }
-      }
-    }
-
-    upHandler() {
-      if (this.dragObject !== null) {
-        this.dragObject = null;
-      }
-    }
-
-    downHandler(e) {
-      if (e.button === 0) {
-        let target = e.target || e.srcElement;
-        let parent = target.parentNode;
-
-        if (target && (this.options.exclude.indexOf(target.tagName.toUpperCase()) == -1)) {
-          if (!parent || (this.options.exclude.indexOf(parent.tagName.toUpperCase()) == -1)) { // img in a
-            this.dragObject = this.ctrl;
-
-            let pageX = e.pageX || e.touches[0].pageX;
-            let pageY = e.pageY || e.touches[0].pageY;
-
-            this.ofs_x = this.dragObject.getBoundingClientRect().left - this.dragObject.offsetLeft;
-            this.ofs_y = this.dragObject.getBoundingClientRect().top - this.dragObject.offsetTop;
-
-            this.pos_x = pageX - (this.dragObject.getBoundingClientRect().left + document.body.scrollLeft);
-            this.pos_y = pageY - (this.dragObject.getBoundingClientRect().top + document.body.scrollTop);
-
-            e.preventDefault();
-          }
-        }
-      }
-    }
-  }
-
-  function makeDraggable(ctrl, options) {
-    if (!ctrl.__draggable) {
-      ctrl.__draggable = new Draggable(ctrl, options);
-    }
-    return ctrl.__draggable;
-  }
-
-  if (window.$) {
-    window.$.fn.makeDraggable = function(options) {
-      this.each(function() {
-        new Draggable(this, options);
+      this.#dragHandler.addEventListener('mousedown', (event) => {
+        this.#downHandler(event);
       });
-      return this;
+
+      window.addEventListener('mousemove', (event) => {
+        this.#moveHandler(event);
+      });
+
+      window.addEventListener('mouseup', () => {
+        this.#upHandler();
+      });
+
+      this.#dragHandler.addEventListener('touchstart', (event) => {
+        this.#downHandler(event, true);
+      });
+
+      window.addEventListener('touchmove', (event) => {
+        this.#moveHandler(event);
+      });
+
+      window.addEventListener('touchend', () => {
+        this.#upHandler();
+      });
+    }
+  }
+
+  #position(element) {
+    let top = 0, left = 0;
+    do {
+      top += element.offsetTop || 0;
+      left += element.offsetLeft || 0;
+      element = element.offsetParent;
+    } while (element);
+
+    return {
+      top: top,
+      left: left,
     };
   }
 
-  if (typeof module !== 'undefined' && module.exports) module.exports = makeDraggable; else window.makeDraggable = makeDraggable;
+  #prepareControl(element) {
+    let position = this.#position(element);
+    element.style.position = 'fixed';
+    element.style.left = position.left + 'px';
+    element.style.top = position.top + 'px';
+    element.style.marginTop = '0px';
+    element.style.marginLeft = '0px';
+  }
 
-})(window);
+  #setPosition(element, left, top) {
+    element.style.marginTop = '0px';
+    element.style.marginLeft = '0px';
+    element.style.left = left + 'px';
+    element.style.top = top + 'px';
+    element.style.right = '';
+    element.style.bottom = '';
+  }
+
+  #moveHandler(e) {
+    if (this.#dragObject !== null) {
+      let pageX = e.pageX ?? e.touches[0].pageX;
+      let pageY = e.pageY ?? e.touches[0].pageY;
+      let left = pageX - this.#pos_x - this.#ofs_x - document.body.scrollLeft;
+      let top = pageY - this.#pos_y - this.#ofs_y - document.body.scrollTop;
+      if (top < 0) {
+        top = 0;
+      }
+      if (top > window.innerHeight) {
+        top = window.innerHeight - 40;
+      }
+      if (left < 0) {
+        left = 0;
+      }
+
+      this.#setPosition(this.#dragObject, left, top);
+      if (this.#options.ondrag) {
+        this.#options.ondrag.call(e);
+      }
+    }
+  }
+
+  #upHandler() {
+    if (this.#dragObject !== null) {
+      this.#dragObject = null;
+    }
+  }
+
+  #downHandler(e, touchEvent) {
+    if ((e.button === 0) || touchEvent) {
+      let target = e.target || e.srcElement;
+      let parent = target.parentNode;
+
+      if (target && (this.#options.exclude.indexOf(target.tagName.toUpperCase()) == -1)) {
+        if (!parent || (this.#options.exclude.indexOf(parent.tagName.toUpperCase()) == -1)) { // img in a
+          this.#dragObject = this.#ctrl;
+
+          let pageX = e.pageX || e.touches[0].pageX;
+          let pageY = e.pageY || e.touches[0].pageY;
+
+          this.#ofs_x = this.#dragObject.getBoundingClientRect().left - this.#dragObject.offsetLeft;
+          this.#ofs_y = this.#dragObject.getBoundingClientRect().top - this.#dragObject.offsetTop;
+
+          this.#pos_x = pageX - (this.#dragObject.getBoundingClientRect().left + document.body.scrollLeft);
+          this.#pos_y = pageY - (this.#dragObject.getBoundingClientRect().top + document.body.scrollTop);
+
+          e.preventDefault();
+        }
+      }
+    }
+  }
+}
+
+function makeDraggable(ctrl, options) {
+  if (!ctrl.__draggable) {
+    ctrl.__draggable = new Draggable(ctrl, options);
+  }
+  return ctrl.__draggable;
+}
+
+if (window.$) {
+  window.$.fn.makeDraggable = function(options) {
+    this.each(function() {
+      new Draggable(this, options);
+    });
+    return this;
+  };
+}
+
+export default makeDraggable;

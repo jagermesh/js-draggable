@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>js-draggable demo</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 40px;
+    }
+
+    .box {
+      position: absolute;
+      width: 180px;
+      height: 120px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      color: #fff;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    #box1 {
+      top: 100px;
+      left: 40px;
+      background: #3f51b5;
+    }
+
+    #box2 {
+      top: 100px;
+      left: 280px;
+      background: #009688;
+    }
+
+    #box2 .handler {
+      cursor: move;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 6px;
+      margin: -10px -10px 8px -10px;
+      border-radius: 6px 6px 0 0;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>js-draggable demo</h1>
+  <p>Drag the boxes below around the page. The second box can only be dragged by its title bar.</p>
+
+  <div id="box1" class="box">
+    <strong>Plain draggable</strong>
+    <p>Drag me anywhere.</p>
+  </div>
+
+  <div id="box2" class="box">
+    <div class="handler">Drag handle</div>
+    <p>Only the handle above is draggable.</p>
+  </div>
+
+  <script src="dist/draggable.js"></script>
+  <script>
+    makeDraggable(document.getElementById('box1'));
+
+    makeDraggable(document.getElementById('box2'), {
+      handler: '.handler',
+    });
+  </script>
+</body>
+</html>
