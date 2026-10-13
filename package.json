@@ -35,7 +35,7 @@
     "lint": "eslint src",
     "test": "npm run lint"
   },
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publishConfig": {
     "access": "public"
   },
