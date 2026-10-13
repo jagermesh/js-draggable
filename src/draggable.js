@@ -27,6 +27,7 @@ class Draggable {
         'BUTTON',
       ],
       handler: null,
+      preserveSize: false,
       ondrag: null,
     }, options);
 
@@ -87,7 +88,17 @@ class Draggable {
   }
 
   #prepareControl(element) {
-    const position = this.#position(element);
+    let position = this.#position(element);
+    if (this.#options.preserveSize) {
+      const rect = element.getBoundingClientRect();
+      position = {
+        left: rect.left,
+        top: rect.top,
+      };
+      element.style.width = `${rect.width}px`;
+      element.style.margin = '0px';
+      element.style.minHeight = '0px';
+    }
 
     element.style.position = 'fixed';
     element.style.left = `${position.left}px`;

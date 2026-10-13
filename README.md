@@ -47,6 +47,7 @@ The element is switched to `position: fixed` so it can be moved freely around th
 ~~~js
 const draggable = new Draggable(document.querySelector('.box'), {
   handler: '.title-bar', // CSS selector (relative to the element) for the drag handle
+  preserveSize: true, // Preserve viewport position and width when switching to fixed
   exclude: ['INPUT', 'TEXTAREA', 'SELECT', 'A', 'BUTTON'],
   ondrag: function() {}, // called on every drag move
 });
@@ -64,6 +65,9 @@ Available options:
   to start dragging; when omitted, the whole element is draggable.
 - `exclude` (array of tag names, default `['INPUT', 'TEXTAREA', 'SELECT', 'A', 'BUTTON']`) - clicks
   on these tags (or their parent) will not start a drag.
+- `preserveSize` (boolean, default `false`) - preserve the element's viewport position and
+  rendered width when switching to `position: fixed`; clear margins and minimum height.
+  Useful for centered dialogs whose layout would otherwise change.
 - `ondrag` (function) - called on every pointer move while dragging.
 
 See `demo.html` for a runnable example.
