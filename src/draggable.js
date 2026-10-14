@@ -1,4 +1,33 @@
 class Draggable {
+  static #instances = new Set();
+
+  static #observer = null;
+
+  #wasConnected = false;
+
+  #destroyed = false;
+
+  static #watch(instance) {
+    instance.#wasConnected = instance.#ctrl.isConnected;
+    Draggable.#instances.add(instance);
+    if (!Draggable.#observer) {
+      Draggable.#observer = new MutationObserver((records) => {
+        for (const item of Draggable.#instances) {
+          if (item.#ctrl.isConnected) {
+            item.#wasConnected = true;
+          } else if (item.#wasConnected || records.some((record) =>
+            Array.from(record.removedNodes).some((node) => node.contains(item.#ctrl)))) {
+            item.destroy();
+          }
+        }
+      });
+      Draggable.#observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+      });
+    }
+  }
+
   #dragObject = null;
 
   #pos_x;
@@ -54,10 +83,20 @@ class Draggable {
         passive: false,
       });
       window.addEventListener('touchend', this.#onPointerUp);
+      Draggable.#watch(this);
     }
   }
 
   destroy() {
+    if (this.#destroyed) {
+      return;
+    }
+    this.#destroyed = true;
+    Draggable.#instances.delete(this);
+    if (!Draggable.#instances.size && Draggable.#observer) {
+      Draggable.#observer.disconnect();
+      Draggable.#observer = null;
+    }
     this.#upHandler();
 
     if (this.#dragHandler) {

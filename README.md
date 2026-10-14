@@ -53,11 +53,21 @@ const draggable = new Draggable(document.querySelector('.box'), {
 });
 ~~~
 
-3) Clean up when you no longer need it:
+3) Event listeners are cleaned up automatically when the element is removed from the document,
+including removal of a parent container. Moving it within the document in the same DOM update
+keeps dragging active. Hiding it with CSS does not destroy the instance.
+
+You can also clean up explicitly when you no longer need it:
 
 ~~~js
 draggable.destroy();
 ~~~
+
+Calling `destroy()` more than once is safe. Once destroyed, create a new instance before
+reusing the element. Instances created before insertion remain active until the element
+has been connected and is subsequently removed. Explicitly destroy an instance if its
+element will never be inserted. All instances share one removal observer, which disconnects
+when the last instance is destroyed.
 
 Available options:
 
