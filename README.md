@@ -94,3 +94,16 @@ If you also want resize handles on the same element, you can pair this with
   new window.Resizable(box);
 </script>
 ~~~
+
+## Instance lifecycle
+
+Calling the constructor again for the same element returns its existing active instance.
+It does not add duplicate listeners or handles, and the original options remain in effect.
+Call `destroy()` before creating a new instance if you need different options.
+
+Removing the element or its parent from the document automatically destroys the instance.
+Moving it within the document in the same DOM update or hiding it with CSS keeps it active.
+After destruction, create a new instance before reusing the element. Repeated `destroy()`
+calls are safe. Instances created before insertion remain active; explicitly destroy one
+if its element will never be inserted. One shared observer per component disconnects when
+the last instance is destroyed.

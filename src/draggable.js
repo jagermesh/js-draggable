@@ -1,4 +1,6 @@
 class Draggable {
+  static #byElement = new WeakMap();
+
   static #instances = new Set();
 
   static #observer = null;
@@ -45,6 +47,10 @@ class Draggable {
   #options;
 
   constructor(ctrl, options) {
+    const existing = Draggable.#byElement.get(ctrl);
+    if (existing) {
+      return existing;
+    }
     this.#ctrl = ctrl;
 
     this.#options = Object.assign({
@@ -83,6 +89,7 @@ class Draggable {
         passive: false,
       });
       window.addEventListener('touchend', this.#onPointerUp);
+      Draggable.#byElement.set(ctrl, this);
       Draggable.#watch(this);
     }
   }
@@ -92,6 +99,9 @@ class Draggable {
       return;
     }
     this.#destroyed = true;
+    if (Draggable.#byElement.get(this.#ctrl) === this) {
+      Draggable.#byElement.delete(this.#ctrl);
+    }
     Draggable.#instances.delete(this);
     if (!Draggable.#instances.size && Draggable.#observer) {
       Draggable.#observer.disconnect();
