@@ -100,13 +100,13 @@ class Draggable {
 
   #dragObject = null;
 
-  #pos_x;
+  #startX;
 
-  #pos_y;
+  #startY;
 
-  #ofs_x;
+  #startLeft;
 
-  #ofs_y;
+  #startTop;
 
   #ctrl;
 
@@ -213,6 +213,8 @@ class Draggable {
         top: rect.top,
       };
       element.style.width = `${rect.width}px`;
+      element.style.height = 'auto';
+      element.style.maxHeight = 'none';
       element.style.margin = '0px';
       element.style.minHeight = '0px';
     }
@@ -231,6 +233,19 @@ class Draggable {
     element.style.top = `${top}px`;
     element.style.right = '';
     element.style.bottom = '';
+  }
+
+  #eventPoint(e) {
+    if (e.touches && e.touches.length) {
+      return {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      };
+    }
+    return {
+      x: e.clientX,
+      y: e.clientY,
+    };
   }
 
   #onPointerDown = (event) => {
@@ -254,10 +269,9 @@ class Draggable {
       return;
     }
 
-    const pageX = e.pageX ?? e.touches[0].pageX;
-    const pageY = e.pageY ?? e.touches[0].pageY;
-    let left = pageX - this.#pos_x - this.#ofs_x - document.body.scrollLeft;
-    let top = pageY - this.#pos_y - this.#ofs_y - document.body.scrollTop;
+    const point = this.#eventPoint(e);
+    let left = this.#startLeft + (point.x - this.#startX);
+    let top = this.#startTop + (point.y - this.#startY);
 
     if (top < 0) {
       top = 0;
@@ -298,14 +312,13 @@ class Draggable {
 
     this.#dragObject = this.#ctrl;
 
-    const pageX = e.pageX || e.touches[0].pageX;
-    const pageY = e.pageY || e.touches[0].pageY;
+    const point = this.#eventPoint(e);
+    const rect = this.#dragObject.getBoundingClientRect();
 
-    this.#ofs_x = this.#dragObject.getBoundingClientRect().left - this.#dragObject.offsetLeft;
-    this.#ofs_y = this.#dragObject.getBoundingClientRect().top - this.#dragObject.offsetTop;
-
-    this.#pos_x = pageX - (this.#dragObject.getBoundingClientRect().left + document.body.scrollLeft);
-    this.#pos_y = pageY - (this.#dragObject.getBoundingClientRect().top + document.body.scrollTop);
+    this.#startX = point.x;
+    this.#startY = point.y;
+    this.#startLeft = rect.left;
+    this.#startTop = rect.top;
 
     e.preventDefault();
   }
