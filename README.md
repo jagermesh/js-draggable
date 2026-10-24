@@ -40,14 +40,16 @@ const draggable = new Draggable(document.querySelector('.box'));
 const draggable = new Draggable(document.querySelector('.box'));
 ~~~
 
-The element is switched to `position: fixed` so it can be moved freely around the viewport.
+By default the element is moved with CSS `transform: translate(...)`, so its existing
+layout/positioning is left intact (important for Bootstrap centered/scrollable modals).
 
 2) Customize if needed:
 
 ~~~js
 const draggable = new Draggable(document.querySelector('.box'), {
   handler: '.title-bar', // CSS selector (relative to the element) for the drag handle
-  preserveSize: true, // Preserve viewport position and width when switching to fixed
+  useFixedPosition: true, // Legacy: position:fixed + top/left instead of transform
+  preserveSize: true, // With useFixedPosition: keep viewport box when switching to fixed
   exclude: ['INPUT', 'TEXTAREA', 'SELECT', 'A', 'BUTTON'],
   ondrag: function() {}, // called on every drag move
 });
@@ -72,12 +74,15 @@ when the last instance is destroyed.
 Available options:
 
 - `handler` (string, default `null`) - CSS selector (relative to the element) for the element used
-  to start dragging; when omitted, the whole element is draggable.
+  to start dragging; when omitted, the whole element is draggable. Edge clamping uses this
+  handle's box when set, so a full-height shell can still move until the handle hits the edge.
 - `exclude` (array of tag names, default `['INPUT', 'TEXTAREA', 'SELECT', 'A', 'BUTTON']`) - clicks
   on these tags (or their parent) will not start a drag.
+- `useFixedPosition` (boolean, default `false`) - legacy mode: switch the element to
+  `position: fixed` and move it with `top`/`left` instead of `transform`.
 - `preserveSize` (boolean, default `false`) - preserve the element's viewport position and
   rendered width when switching to `position: fixed`; clear margins and minimum height.
-  Useful for centered dialogs whose layout would otherwise change.
+  Implies `useFixedPosition` (kept for older callers that passed `preserveSize` alone).
 - `ondrag` (function) - called on every pointer move while dragging.
 
 See `demo.html` for a runnable example.

@@ -62,9 +62,16 @@ class Draggable {
         'BUTTON',
       ],
       handler: null,
+      // Legacy: position:fixed + top/left. Default is transform so existing
+      // layout (e.g. Bootstrap modal centered/scrollable) stays intact.
+      useFixedPosition: false,
       preserveSize: false,
       ondrag: null,
     }, options);
+    // Older callers passed preserveSize alone; it only applies in fixed mode.
+    if (this.#options.preserveSize) {
+      this.#options.useFixedPosition = true;
+    }
 
     if (this.#options.handler) {
       this.#dragHandler = ctrl.querySelector(this.#options.handler);
@@ -136,7 +143,22 @@ class Draggable {
     };
   }
 
+  #readTranslate(element) {
+    const matrix = new DOMMatrixReadOnly(window.getComputedStyle(element).transform);
+    return {
+      x: matrix.m41,
+      y: matrix.m42,
+    };
+  }
+
   #prepareControl(element) {
+    // Avoid fighting CSS transitions (e.g. Bootstrap modal fade transform).
+    element.style.transition = 'none';
+
+    if (!this.#options.useFixedPosition) {
+      return;
+    }
+
     let position = this.#position(element);
     if (this.#options.preserveSize) {
       const rect = element.getBoundingClientRect();
@@ -159,12 +181,33 @@ class Draggable {
   }
 
   #setPosition(element, left, top) {
-    element.style.marginTop = '0px';
-    element.style.marginLeft = '0px';
-    element.style.left = `${left}px`;
-    element.style.top = `${top}px`;
-    element.style.right = '';
-    element.style.bottom = '';
+    if (this.#options.useFixedPosition) {
+      element.style.marginTop = '0px';
+      element.style.marginLeft = '0px';
+      element.style.left = `${left}px`;
+      element.style.top = `${top}px`;
+      element.style.right = '';
+      element.style.bottom = '';
+      return;
+    }
+    element.style.transform = `translate(${left}px, ${top}px)`;
+  }
+
+  #clampTransform(left, top) {
+    // Clamp by the handle so a full-height shell (Bootstrap centered modal)
+    // can still move until the grab point hits the viewport edge.
+    this.#setPosition(this.#ctrl, left, top);
+    const box = (this.#dragHandler || this.#ctrl).getBoundingClientRect();
+    if (box.top < 0) {
+      top -= box.top;
+    }
+    if (box.left < 0) {
+      left -= box.left;
+    }
+    if (box.top > window.innerHeight - 40) {
+      top -= box.top - (window.innerHeight - 40);
+    }
+    return { left, top };
   }
 
   #eventPoint(e) {
@@ -205,14 +248,20 @@ class Draggable {
     let left = this.#startLeft + (point.x - this.#startX);
     let top = this.#startTop + (point.y - this.#startY);
 
-    if (top < 0) {
-      top = 0;
-    }
-    if (top > window.innerHeight) {
-      top = window.innerHeight - 40;
-    }
-    if (left < 0) {
-      left = 0;
+    if (this.#options.useFixedPosition) {
+      if (top < 0) {
+        top = 0;
+      }
+      if (top > window.innerHeight) {
+        top = window.innerHeight - 40;
+      }
+      if (left < 0) {
+        left = 0;
+      }
+    } else {
+      const clamped = this.#clampTransform(left, top);
+      left = clamped.left;
+      top = clamped.top;
     }
 
     this.#setPosition(this.#dragObject, left, top);
@@ -245,12 +294,18 @@ class Draggable {
     this.#dragObject = this.#ctrl;
 
     const point = this.#eventPoint(e);
-    const rect = this.#dragObject.getBoundingClientRect();
-
     this.#startX = point.x;
     this.#startY = point.y;
-    this.#startLeft = rect.left;
-    this.#startTop = rect.top;
+
+    if (this.#options.useFixedPosition) {
+      const rect = this.#dragObject.getBoundingClientRect();
+      this.#startLeft = rect.left;
+      this.#startTop = rect.top;
+    } else {
+      const translate = this.#readTranslate(this.#dragObject);
+      this.#startLeft = translate.x;
+      this.#startTop = translate.y;
+    }
 
     e.preventDefault();
   }
